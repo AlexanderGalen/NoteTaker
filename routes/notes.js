@@ -60,6 +60,59 @@ notes.post("/", (req, res) => {
 
 })
 
-// set up post route for notes api
+// set up delete route for deleting existing notes by id
+notes.delete("/:id", (req, res) => {
+    // pull id from request params
+    const thisId = req.params.id;
+    console.log("delete request recieved for id " + thisId);
+    
+    // read existing notes from db file
+    fs.readFile(dbPath, "utf8", (err, data) => {
+        if(err) {
+            console.log(err)
+            return err;
+        }
+
+        let notesList = JSON.parse(data);
+        let newNotesList = [];
+        
+        // loop through list of notes looking for the note matching this id
+        for (let i = 0; i < notesList.length; i++) {
+            const thisNote = notesList[i];
+            if(thisNote.id !== thisId) {
+                // if this note isn't the one we're deleting, add it to ournew notes
+
+                newNotesList.push(thisNote);
+            }
+
+        }
+
+        // once we've looped through the notes and only added notes that didn't match the id
+        // compare the length of the before and after array to see if anything was deleted
+
+        // if they're the same length, something went wrong
+        if(notesList.length == newNotesList.length) {
+            res.status(500).send("error, no note matched id " + thisId);
+            console.log("error, no note matched id " + thisId);
+        }
+        else {
+            console.log("removed note " + thisId);
+            // write our new notes list back to file
+            fs.writeFile(dbPath, JSON.stringify(newNotesList), (err) => {
+                if(err) {
+                    console.log(err);
+                    res.status(500).send("error: " + err);
+                }
+                else {
+                    res.status(200).send(newNotesList);
+                }
+            });
+            
+        }
+
+
+    })
+
+})
 
 module.exports = notes;
